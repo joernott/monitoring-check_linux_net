@@ -8,8 +8,8 @@ Release:        %{release}
 Summary:        Check Linux network IO
 License:        Lunch license
 Group:          System/Monitoring
-Url:            https://github.com/joernott/Nag_checks
-Source0:        Nag_checks-%{version}.tar.gz
+Url:            https://github.com/joernott/monitoring-check_linux_net
+Source0:        monitoring-check_linux_net-%{version}.tar.gz
 BuildArch:      noarch
 Provides:       check_linux_net
 
@@ -19,7 +19,7 @@ use to have this do anything you want. It's very low resource and has performanc
 monitoring.
 
 %prep
-%setup -q -n Nag_checks-%{version}
+%setup -q -n monitoring-check_linux_net-%{version}
 
 %install
 rm -rf "$RPM_BUILD_ROOT"
@@ -31,5 +31,5 @@ cp check_linux_net "$RPM_BUILD_ROOT/usr/lib64/nagios/plugins/"
 %attr(0755,root,root) /usr/lib64/nagios/plugins/check_linux_net
 
 %changelog
-* Wed Apr 26 2022 Joern Ott <joern.ott@schufa.de>
+* Thu Apr 28 2022 Joern Ott <joern.ott@schufa.de>
 - Initial rpm build version
