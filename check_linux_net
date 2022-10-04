@@ -399,8 +399,15 @@ done
         }
         ## Gather information
         TMP_NAME="$TMP_DIR/${MON}${IFACE}"
-        sed -n "s/${IFACE}:\(.*\)/\1/p" $NETDEV | awk -v epoc=$(date +%s) '{print epoc" "$2" "$3" "$4" "$1" "$10" "$11" "$9" "$4}' >${TMP_NAME}_new
-        [[ -f $TMP_NAME ]] && {
+        # if file <device>_new exists with content, and a zero <device> file exists
+        # the last run was not a proper run.
+        # mv <device>_new to <device> - so we can compare data
+        # fixes "Input data is missing. check your -i argument"
+        [[ -f $TMP_NAME && -f ${TMP_NAME}_new && ! -s $TMP_NAME && -s ${TMP_NAME}_new ]] && {
+            mv "${TMP_NAME}_new" "${TMP_NAME}"
+        }
+	sed -n "s/${IFACE}:\(.*\)/\1/p" $NETDEV | awk -v epoc=$(date +%s) '{print epoc" "$2" "$3" "$4" "$1" "$10" "$11" "$9" "$4}' >${TMP_NAME}_new
+	[[ -f $TMP_NAME ]] && {
             unset NEW LAST i
             NEW=($(cat ${TMP_NAME}_new))
             LAST=($(cat ${TMP_NAME}))
