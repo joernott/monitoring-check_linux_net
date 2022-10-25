@@ -406,8 +406,8 @@ done
         [[ -f $TMP_NAME && -f ${TMP_NAME}_new && ! -s $TMP_NAME && -s ${TMP_NAME}_new ]] && {
             mv "${TMP_NAME}_new" "${TMP_NAME}"
         }
-        sed -n "s/${IFACE}:\(.*\)/\1/p" $NETDEV | awk -v epoc=$(date +%s) '{print epoc" "$2" "$3" "$4" "$1" "$10" "$11" "$9" "$4}' >${TMP_NAME}_new
-        [[ -f $TMP_NAME ]] && {
+	sed -n "s/${IFACE}:\(.*\)/\1/p" $NETDEV | awk -v epoc=$(date +%s) '{print epoc" "$2" "$3" "$4" "$1" "$10" "$11" "$9" "$4}' >${TMP_NAME}_new
+	[[ -f $TMP_NAME ]] && {
             unset NEW LAST i
             NEW=($(cat ${TMP_NAME}_new))
             LAST=($(cat ${TMP_NAME}))
@@ -449,7 +449,8 @@ done
 
         ## Print information
         [[ -z $ERROR ]] && {
-            mv "${TMP_NAME}_new" "${TMP_NAME}"
+
+            mv ${TMP_NAME}_new $TMP_NAME
             CURRENT[50]=$((${CURRENT[1]} + ${CURRENT[5]}))
             CURRENT[51]=$((${CURRENT[2]} + ${CURRENT[6]}))
             CURRENT[52]=$((${CURRENT[4]} + ${CURRENT[7]}))
