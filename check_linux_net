@@ -379,7 +379,11 @@ done
     [[ $WARN != 0 ]] && VAR_INFO=" -v warn=$WARN"
     [[ $CRIT != 0 ]] && VAR_INFO=" -v crit=$CRIT"
     [[ -n $DIV ]] && VAR_INFO=" -v divnum=$DIVNUM"
-
+    [[ $SHOW_BITS == ON ]] && {
+            DIV="${DIV}bits"
+        } || {
+            DIV="${DIV}bytes"
+        }
     ## multiple interfaces hasn't been tested yet
     ## fixed? there is a divide by zero error if it's run too soon
     ## fixed? error checking needs to be added inside the "for"
@@ -457,14 +461,9 @@ done
                 [[ $SHOW_BITS == ON && $i != 0 ]] && {
                     CURRENT[$i]=$(echo "${CURRENT[$i]}*8" | bc)
                 }
+                CURRENTTEMP[$i]=$(echo "${CURRENT[$i]}")    # Save Byte value
                 CURRENT[$i]=$(echo "${CURRENT[$i]}/$DIVNUM" | bc)
             done
-
-            [[ $SHOW_BITS == ON ]] && {
-                DIV="${DIV}bits"
-            } || {
-                DIV="${DIV}bytes"
-            }
 
             [[ -z $LAST_RUN ]] && {
                 TXTSCALE="average per second over the last ${CURRENT[0]} seconds."
@@ -524,32 +523,37 @@ done
             2) X_MESSAGE="CRITICAL:" ;;
             *) X_MESSAGE="UNKNOWN: " ;;
             esac
-            [[ -n $X_TEXT ]] && printf "${0##*/} $X_MESSAGE $X_TEXT|" || printf "${0##*/} ${X_MESSAGE}|"
+            [[ -n $X_TEXT ]] && PERF_DATA="${IFACE} $X_MESSAGE $X_TEXT|" || PERF_DATA="${IFACE} ${X_MESSAGE}|"
+
+            # Workarround to have floats
+            for i in 4 7 52; do
+                CURRENT[$i]=$(echo "${CURRENTTEMP[$i]}/$DIVNUM" | bc -l)
+            done
 
             ##############################################
             ## Output Performance data
             ##############################################
 
             [[ -z $SHOW_DATA ]] && SHOW_DATA="DATA_TOT,PKT_TOT,ERR_TOT,DROP"
-
             for CURR_SHOW_DATA in $(echo $SHOW_DATA | tr [:lower:] [:upper:] | tr "," " "); do
                 case $CURR_SHOW_DATA in
-                DATA_IN) PERF_DATA="${PERF_DATA} 'Incoming Data ($DIV)'=${CURRENT[4]}${PERF_DIV}:${WARN[11]}:${CRIT[11]}::" ;;
-                DATA_OUT) PERF_DATA="${PERF_DATA} 'Outgoing Data ($DIV)'=${CURRENT[7]}${PERF_DIV}:${WARN[12]}:${CRIT[12]}::" ;;
-                DATA_TOT) PERF_DATA="${PERF_DATA} 'Total Data ($DIV)'=${CURRENT[52]}${PERF_DIV}:${WARN[13]}:${CRIT[13]}::" ;;
-                PKT_IN) PERF_DATA="${PERF_DATA} 'Incoming Packets'=${CURRENT[1]}:${WARN[21]}:${CRIT[21]}::" ;;
-                PKT_OUT) PERF_DATA="${PERF_DATA} 'Outgoing Packets'=${CURRENT[5]}:${WARN[22]}:${CRIT[22]}::" ;;
-                PKT_TOT) PERF_DATA="${PERF_DATA} 'Total Packets'=${CURRENT[50]}:${WARN[23]}:${CRIT[23]}::" ;;
-                ERR_IN) PERF_DATA="${PERF_DATA} 'Incoming Errors'=${CURRENT[2]}:${WARN[31]}:${CRIT[31]}::" ;;
-                ERR_OUT) PERF_DATA="${PERF_DATA} 'Outgoing Errors'=${CURRENT[6]}:${WARN[32]}:${CRIT[32]}::" ;;
-                ERR_TOT) PERF_DATA="${PERF_DATA} 'Total Errors'=${CURRENT[51]}:${WARN[33]}:${CRIT[33]}::" ;;
-                DROP) PERF_DATA="${PERF_DATA} 'Dropped Packets'=${CURRENT[3]}:${WARN[50]}:${CRIT[50]}::" ;;
+                DATA_IN) PERF_DATA="${PERF_DATA}'$IFACE:Incoming Data ($DIV)'=${CURRENT[4]}${PERF_DIV};${WARN[11]};${CRIT[11]};; " ;;
+                DATA_OUT) PERF_DATA="${PERF_DATA}'$IFACE:Outgoing Data ($DIV)'=${CURRENT[7]}${PERF_DIV};${WARN[12]};${CRIT[12]};; " ;;
+                DATA_TOT) PERF_DATA="${PERF_DATA}'$IFACE:Total Data ($DIV)'=${CURRENT[52]}${PERF_DIV};${WARN[13]};${CRIT[13]};; " ;;
+                PKT_IN) PERF_DATA="${PERF_DATA}'$IFACE:Incoming Packets'=${CURRENT[1]};${WARN[21]};${CRIT[21]};; " ;;
+                PKT_OUT) PERF_DATA="${PERF_DATA}'$IFACE:Outgoing Packets'=${CURRENT[5]};${WARN[22]};${CRIT[22]};; " ;;
+                PKT_TOT) PERF_DATA="${PERF_DATA}'$IFACE:Total Packets'=${CURRENT[50]};${WARN[23]};${CRIT[23]};; " ;;
+                ERR_IN) PERF_DATA="${PERF_DATA}'$IFACE:Incoming Errors'=${CURRENT[2]};${WARN[31]};${CRIT[31]};; " ;;
+                ERR_OUT) PERF_DATA="${PERF_DATA}'$IFACE:Outgoing Errors'=${CURRENT[6]};${WARN[32]};${CRIT[32]};; " ;;
+                ERR_TOT) PERF_DATA="${PERF_DATA}'$IFACE:Total Errors'=${CURRENT[51]};${WARN[33]};${CRIT[33]};; " ;;
+                DROP) PERF_DATA="${PERF_DATA}'$IFACE:Dropped Packets'=${CURRENT[3]};${WARN[50]};${CRIT[50]};; " ;;
                 esac
             done
-            printf "${PERF_DATA}\n"
+            printf "${PERF_DATA::-1}\n"
         }
 
     done
+
 }
 
 [[ -n $ERROR ]] && {
